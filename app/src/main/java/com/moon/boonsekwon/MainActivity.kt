@@ -31,6 +31,8 @@ import java.util.Locale;
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    private lateinit var map: GoogleMap
+    
     private val GPS_ENABLE_REQUEST_CODE = 2001
     private val PERMISSIONS_REQUEST_CODE = 100
     var REQUIRED_PERMISSIONS = arrayOf<String>(
@@ -65,22 +67,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         "현재위치 \n위도 $latitude\n경도 $longitude\n address: $address",
                         Toast.LENGTH_LONG
                     ).show()
+
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 14f))
                 }
             }
         }
     }
 
-    override fun onMapReady(googleMap: GoogleMap?) {
-        val map = googleMap
-
-        val SEOUL = LatLng(37.56, 126.97)
-
-        val markerOptions = MarkerOptions()
-        markerOptions.position(SEOUL)
-        markerOptions.title("서울")
-        markerOptions.snippet("한국의 수도")
-        map?.addMarker(markerOptions)
-        map?.moveCamera(CameraUpdateFactory.newLatLngZoom(SEOUL, 10f))
+    override fun onMapReady(googleMap: GoogleMap) {
+        map = googleMap
+//
+//        val SEOUL = LatLng(37.56, 126.97)
+//
+//        val markerOptions = MarkerOptions()
+//        markerOptions.position(SEOUL)
+//        markerOptions.title("서울")
+//        markerOptions.snippet("한국의 수도")
+//        map?.addMarker(markerOptions)
+//        map?.moveCamera(CameraUpdateFactory.newLatLngZoom(SEOUL, 10f))
     }
 
     /*
