@@ -1,38 +1,39 @@
 package com.moon.boonsekwon
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.LocationManager;
-import android.os.Bundle;
+import android.Manifest
+import android.app.AlertDialog
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.location.LocationManager
+import android.os.Bundle
 import android.provider.Settings
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.Toast
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 
-import java.io.IOException;
-import java.util.Locale;
-
+import java.io.IOException
+import java.util.Locale
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
-    
+    private lateinit var gpsTracker: GpsTracker
+    private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
+
     private val GPS_ENABLE_REQUEST_CODE = 2001
     private val PERMISSIONS_REQUEST_CODE = 100
     var REQUIRED_PERMISSIONS = arrayOf<String>(
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).let {
@@ -49,8 +51,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         initView()
+        initPersistentBottomSheetBehavior()
     }
-
     private fun initView() {
         if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting()
@@ -58,9 +60,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             checkRunTimePermission()
         }
 
+        gpsTracker = GpsTracker(this@MainActivity)
+
         findViewById<Button>(R.id.my_location).run {
             setOnClickListener {
-                GpsTracker(this@MainActivity).run {
+                gpsTracker.run {
                     val address = getCurrentAddress(latitude, longitude)
                     Toast.makeText(
                         this@MainActivity,
@@ -68,14 +72,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         Toast.LENGTH_LONG
                     ).show()
 
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 14f))
+                    map.moveCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(latitude, longitude),
+                            15f
+                        )
+                    )
                 }
             }
         }
     }
 
+    private fun initPersistentBottomSheetBehavior() {
+        persistentBottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet_persistent)
+        persistentBottomSheetBehavior.run {
+            setBottomSheetCallback(object: BottomSheetBehavior.BottomSheetCallback(){
+                override fun onStateChanged(p0: View, state: Int) {
+                    when(state) {
+                        BottomSheetBehavior.STATE_EXPANDED-> {
+
+                        }
+                    }
+                }
+
+                override fun onSlide(p0: View, p1: Float) {
+                }
+            })
+        }
+    }
+
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        map.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(gpsTracker.latitude, gpsTracker.longitude),
+                15f
+            )
+        )
 //
 //        val SEOUL = LatLng(37.56, 126.97)
 //
