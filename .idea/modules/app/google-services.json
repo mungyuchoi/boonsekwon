@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "632309481851",
+    "project_id": "boongsekwon",
+    "storage_bucket": "boongsekwon.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:632309481851:android:cf2a983c17a8c04905bdde",
+        "android_client_info": {
+          "package_name": "com.moon.boonsekwon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "632309481851-pcd5ct0fa2rphu5egs3mdevftqkllk50.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.moon.boonsekwon",
+            "certificate_hash": "ab2e547f57cbb4215b27ee18d118f08d3779f506"
+          }
+        },
+        {
+          "client_id": "632309481851-h8i3dllhnqfv0ke26rk0tfn5a4pr846e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8U29mmLRdYQDEX05l0rnK9-pUg7c-Jts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "632309481851-h8i3dllhnqfv0ke26rk0tfn5a4pr846e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,6 +2,7 @@ package com.moon.boonsekwon
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,15 +15,27 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
+import android.view.ActionMode
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.database.FirebaseDatabase
+import com.kongzue.dialog.v2.InputDialog
+import com.moon.boonsekwon.data.User
 import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 
 import java.io.IOException
@@ -41,6 +54,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -52,7 +67,39 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         initView()
         initPersistentBottomSheetBehavior()
+        initFirebase()
     }
+
+    override fun onStart() {
+        super.onStart()
+        val currentUser = auth.currentUser
+        updateUI(currentUser)
+    }
+
+    private fun updateUI(user: FirebaseUser?) {
+        Log.i(TAG, "updateUI user:$user")
+        if (user == null) {
+        }
+    }
+
+
+    private fun initFirebase() {
+        auth = FirebaseAuth.getInstance()
+        // Configure Google Sign In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        val client = GoogleSignIn.getClient(application, gso)
+        auth = FirebaseAuth.getInstance().apply {
+            if (currentUser == null) {
+                startActivityForResult(client.signInIntent, RC_SIGN_IN)
+            } else {
+
+            }
+        }
+    }
+
     private fun initView() {
         if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting()
@@ -86,10 +133,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initPersistentBottomSheetBehavior() {
         persistentBottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet_persistent)
         persistentBottomSheetBehavior.run {
-            setBottomSheetCallback(object: BottomSheetBehavior.BottomSheetCallback(){
+            setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                 override fun onStateChanged(p0: View, state: Int) {
-                    when(state) {
-                        BottomSheetBehavior.STATE_EXPANDED-> {
+                    when (state) {
+                        BottomSheetBehavior.STATE_EXPANDED -> {
 
                         }
                     }
@@ -283,12 +330,95 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         return
                     }
                 }
+            RC_SIGN_IN -> {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+                try {
+                    // Google Sign In was successful, authenticate with Firebase
+                    val account = task.getResult(ApiException::class.java)
+                    firebaseAuthWithGoogle(account!!)
+                } catch (e: ApiException) {
+                    Log.w(TAG, "Google sign in failed", e)
+                    finish()
+                }
+            }
         }
+    }
+
+    private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.id!!)
+
+        val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
+        auth?.signInWithCredential(credential)!!
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(TAG, "signInWithCredential:success")
+                    val pref =
+                        applicationContext.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
+                    Log.d(TAG, "name: " + pref.getString("name", "unknown"))
+                    if (pref.getString("name", "unknown") == "unknown") {
+                        InputDialog.build(
+                            this@MainActivity,
+                            "별명을 입력해주세요.", "사용할 별명을 입력해주세요", "완료",
+                            { dialog, inputText ->
+                                dialog.dismiss()
+                                val pref = applicationContext.getSharedPreferences(
+                                    "BOONSEKWON",
+                                    MODE_PRIVATE
+                                )
+                                val editor = pref.edit()
+                                editor.putString("name", auth?.currentUser?.displayName)
+                                editor.putString(
+                                    "image",
+                                    auth?.currentUser?.photoUrl.toString()
+                                )
+                                var usersRef =
+                                    FirebaseDatabase.getInstance().reference.child("users")
+                                        .push()
+                                editor.putString("key", usersRef.key)
+                                editor.commit()
+                                var name = inputText
+                                if (name == null || name.isEmpty()) {
+                                    name = auth?.currentUser?.displayName
+                                }
+                                Log.d(TAG, "name: $name")
+                                usersRef.setValue(
+                                    User(
+                                        name = name,
+                                        imageUrl = auth?.currentUser?.photoUrl.toString(),
+                                    )
+                                )
+                                finishAffinity()
+                                val intent = Intent(this, MainActivity::class.java)
+                                startActivity(intent)
+                            }, "취소", { dialog, _ ->
+                                dialog.dismiss()
+                                finish()
+                            }).apply {
+                            setDialogStyle(1)
+                            setDefaultInputHint(auth?.currentUser?.displayName)
+                            showDialog()
+                        }
+                    }
+
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "signInWithCredential:failure", task.exception)
+//                    Snackbar.make(main_layout, "Authentication Failed.", Snackbar.LENGTH_SHORT)
+//                        .show()
+                    finish()
+                }
+            }
     }
 
     fun checkLocationServicesStatus(): Boolean {
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         return (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+    }
+
+    companion object {
+        const val TAG = "BOONG"
+        val RC_SIGN_IN = 9001
     }
 }
