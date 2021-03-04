@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -39,6 +41,7 @@ import com.kongzue.dialog.v2.InputDialog
 import com.moon.boonsekwon.data.User
 import com.moon.boonsekwon.databinding.ActivityMainBinding
 import com.moon.boonsekwon.databinding.BottomSheetPersistentBinding
+import com.moon.boonsekwon.register.RegisterActivity
 import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 
 import java.io.IOException
@@ -123,10 +126,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         "현재위치 \n위도 $latitude\n경도 $longitude\n address: $address",
                         Toast.LENGTH_LONG
                     ).show()
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        LatLng(latitude, longitude),
-                        15f
-                    ))
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(latitude, longitude),
+                            15f
+                        )
+                    )
                 }
             }
         }
@@ -182,7 +187,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         map.setOnMapClickListener {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
+
+        map.setOnMapLongClickListener {
+            startActivity(Intent(this@MainActivity, RegisterActivity::class.java).apply {
+                putExtra("latitude", it.latitude)
+                putExtra("longitude", it.longitude)
+            })
+        }
     }
+
     override fun onRequestPermissionsResult(
         permsRequestCode: Int,
         permissions: Array<String?>,
