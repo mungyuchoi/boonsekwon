@@ -84,6 +84,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         updateUI(currentUser)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.register -> {
+                startActivity(Intent(this, RegisterActivity::class.java))
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun updateUI(user: FirebaseUser?) {
         Log.i(TAG, "updateUI user:$user")
         if (user == null) {
@@ -168,7 +182,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         })
 
-        map.moveCamera(
+        map.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(gpsTracker.latitude, gpsTracker.longitude),
                 15f
@@ -188,12 +202,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 
-        map.setOnMapLongClickListener {
-            startActivity(Intent(this@MainActivity, RegisterActivity::class.java).apply {
-                putExtra("latitude", it.latitude)
-                putExtra("longitude", it.longitude)
-            })
-        }
+//        map.setOnMapLongClickListener {
+//            startActivity(Intent(this@MainActivity, RegisterActivity::class.java).apply {
+//                putExtra("latitude", it.latitude)
+//                putExtra("longitude", it.longitude)
+//            })
+//        }
     }
 
     override fun onRequestPermissionsResult(
