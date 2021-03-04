@@ -28,6 +28,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
@@ -36,6 +37,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import com.kongzue.dialog.v2.InputDialog
 import com.moon.boonsekwon.data.User
+import com.moon.boonsekwon.databinding.ActivityMainBinding
+import com.moon.boonsekwon.databinding.BottomSheetPersistentBinding
 import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 
 import java.io.IOException
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var gpsTracker: GpsTracker
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
+    private lateinit var binding: ActivityMainBinding
 
     private val GPS_ENABLE_REQUEST_CODE = 2001
     private val PERMISSIONS_REQUEST_CODE = 100
@@ -58,8 +62,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).let {
             it.getMapAsync(this)
@@ -150,12 +155,31 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        map.addMarker(MarkerOptions().apply {
+            position(LatLng(37.32487, 127.10762))
+            title("죽전역 앞 포장마차 잉어빵")
+            snippet(
+                "잉어빵2개 천원 5개 2천원이다.\n" +
+                        "시간 잘 맞춰서 가면 뜨겁고 바삭바삭한 잉어빵을 먹을 수 있다. 오뎅도 판다.\n" +
+                        "밤 11시에도 열려있었다. 아침에 여는 시간은 잘 모름."
+            )
+        })
+
         map.moveCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(gpsTracker.latitude, gpsTracker.longitude),
                 15f
             )
         )
+
+        map.setOnMarkerClickListener { marker ->
+            binding.bottomSheetPersistent.run {
+                title.text = marker.title
+                description.text = marker.snippet
+            }
+            persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            false
+        }
 //
 //        val SEOUL = LatLng(37.56, 126.97)
 //

@@ -33,5 +33,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <include layout="@layout/bottom_sheet_persistent" />
+    <include
+        android:id="@+id/bottom_sheet_persistent"
+        layout="@layout/bottom_sheet_persistent" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
