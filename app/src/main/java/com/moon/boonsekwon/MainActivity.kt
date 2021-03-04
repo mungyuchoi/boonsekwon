@@ -123,13 +123,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         "현재위치 \n위도 $latitude\n경도 $longitude\n address: $address",
                         Toast.LENGTH_LONG
                     ).show()
-
-                    map.moveCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(latitude, longitude),
-                            15f
-                        )
-                    )
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        LatLng(latitude, longitude),
+                        15f
+                    ))
                 }
             }
         }
@@ -155,6 +152,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+
         map.addMarker(MarkerOptions().apply {
             position(LatLng(37.32487, 127.10762))
             title("죽전역 앞 포장마차 잉어빵")
@@ -180,32 +178,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             false
         }
-//
-//        val SEOUL = LatLng(37.56, 126.97)
-//
-//        val markerOptions = MarkerOptions()
-//        markerOptions.position(SEOUL)
-//        markerOptions.title("서울")
-//        markerOptions.snippet("한국의 수도")
-//        map?.addMarker(markerOptions)
-//        map?.moveCamera(CameraUpdateFactory.newLatLngZoom(SEOUL, 10f))
-    }
 
-    /*
-     * ActivityCompat.requestPermissions를 사용한 퍼미션 요청의 결과를 리턴받는 메소드입니다.
-     */
+        map.setOnMapClickListener {
+            persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        }
+    }
     override fun onRequestPermissionsResult(
         permsRequestCode: Int,
         permissions: Array<String?>,
         grandResults: IntArray
     ) {
         if (permsRequestCode == PERMISSIONS_REQUEST_CODE && grandResults.size == REQUIRED_PERMISSIONS.size) {
-
-            // 요청 코드가 PERMISSIONS_REQUEST_CODE 이고, 요청한 퍼미션 개수만큼 수신되었다면
             var check_result = true
-
-
-            // 모든 퍼미션을 허용했는지 체크합니다.
             for (result in grandResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
                     check_result = false
