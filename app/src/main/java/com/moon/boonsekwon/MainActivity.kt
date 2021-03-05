@@ -36,8 +36,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import com.kongzue.dialog.v2.InputDialog
+import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.User
 import com.moon.boonsekwon.databinding.ActivityMainBinding
 import com.moon.boonsekwon.databinding.BottomSheetPersistentBinding
@@ -92,18 +93,63 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.register -> {
-                startActivity(Intent(this, RegisterActivity::class.java))
+                Log.i("MQ!", "center position latitude:${map.cameraPosition.target.latitude}, longitude:${map.cameraPosition.target.latitude}")
+                val intent = Intent(this, RegisterActivity::class.java).apply {
+                    putExtra(Const.CENTER_LATITUDE, map.cameraPosition.target.latitude)
+                    putExtra(Const.CENTER_LONGITUDE, map.cameraPosition.target.longitude)
+                }
+                startActivity(intent)
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
+    var userMeQuery: Query? = null
+
     private fun updateUI(user: FirebaseUser?) {
         Log.i(TAG, "updateUI user:$user")
-        if (user == null) {
+        user?.run {
+            loadUserInfo()
         }
     }
 
+    fun loadUserInfo() {
+        val pref = application.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
+        val keyMe = pref.getString("key", "")
+        if (keyMe == "" || keyMe!!.isEmpty()) {
+            return
+        }
+        userMeQuery = if (userMeQuery == null) {
+            FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                addValueEventListener(loadUserListener)
+            }
+        } else {
+            userMeQuery?.removeEventListener(loadUserListener)
+            FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                addValueEventListener(loadUserListener)
+            }
+        }
+    }
+
+    val loadUserListener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val key = snapshot.key
+            Log.i("MQ!", "onDataChange user key:$key")
+            val pref = application.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
+            val keyMe = pref.getString("key", "")
+            if (keyMe == "" || keyMe!!.isEmpty()) {
+                return
+            }
+            if (key == keyMe) {
+                val user = snapshot.getValue(User::class.java)
+                supportActionBar?.title = "붕세권 Point: ${user?.point}"
+                return
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+        }
+    }
 
     private fun initFirebase() {
         auth = FirebaseAuth.getInstance()

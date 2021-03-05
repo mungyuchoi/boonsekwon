@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/name_register"
+        android:title="상호등록"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/location_register"
+        android:title="위치등록"
+        app:showAsAction="never" />
+</menu>
