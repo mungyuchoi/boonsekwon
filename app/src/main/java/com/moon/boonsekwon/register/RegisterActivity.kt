@@ -81,6 +81,8 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                             registerKey = pref.getString("key", null)
                         )
                     )
+                    Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()
+                    finish()
                 } else {
                     Toast.makeText(this, "이름, 내용을 입력해주세요!!", Toast.LENGTH_SHORT).show()
                 }
@@ -88,6 +90,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
             R.id.location_register -> {
                 if (validCheckInfo()) {
                     // TODO EditText두개 넣어서 위도 경도 받고 넣기
+                    Toast.makeText(this, "기능 준비중입니다.", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "이름, 내용을 입력해주세요!!", Toast.LENGTH_SHORT).show()
                 }

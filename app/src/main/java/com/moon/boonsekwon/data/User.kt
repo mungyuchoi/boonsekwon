@@ -3,5 +3,5 @@ package com.moon.boonsekwon.data
 data class User(
     var name: String? = null,
     var imageUrl: String? = null,
-    var point: Int? = 0
+    var point: Int = 0
 )

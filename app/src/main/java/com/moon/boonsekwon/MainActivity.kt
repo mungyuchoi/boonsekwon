@@ -11,6 +11,8 @@ import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
+import android.text.SpannableString
+import android.text.style.UnderlineSpan
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
@@ -55,6 +57,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityMainBinding
 
+    private var me: User? = null
     private val GPS_ENABLE_REQUEST_CODE = 2001
     private val PERMISSIONS_REQUEST_CODE = 100
     var REQUIRED_PERMISSIONS = arrayOf<String>(
@@ -93,7 +96,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.register -> {
-                Log.i("MQ!", "center position latitude:${map.cameraPosition.target.latitude}, longitude:${map.cameraPosition.target.latitude}")
+                Log.i(
+                    TAG,
+                    "center position latitude:${map.cameraPosition.target.latitude}, longitude:${map.cameraPosition.target.latitude}"
+                )
                 val intent = Intent(this, RegisterActivity::class.java).apply {
                     putExtra(Const.CENTER_LATITUDE, map.cameraPosition.target.latitude)
                     putExtra(Const.CENTER_LONGITUDE, map.cameraPosition.target.longitude)
@@ -116,18 +122,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     fun loadUserInfo() {
         val pref = application.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
         val keyMe = pref.getString("key", "")
+        Log.i("MQ!", "loadUserInfo keyMe:$keyMe, query:$userMeQuery")
         if (keyMe == "" || keyMe!!.isEmpty()) {
             return
         }
-        userMeQuery = if (userMeQuery == null) {
-            FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-                addValueEventListener(loadUserListener)
-            }
+        if (userMeQuery == null) {
+            userMeQuery =
+                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                    addValueEventListener(loadUserListener)
+                }
         } else {
             userMeQuery?.removeEventListener(loadUserListener)
-            FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-                addValueEventListener(loadUserListener)
-            }
+            userMeQuery =
+                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                    addValueEventListener(loadUserListener)
+                }
         }
     }
 
@@ -142,6 +151,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             if (key == keyMe) {
                 val user = snapshot.getValue(User::class.java)
+                me = user
                 supportActionBar?.title = "붕세권 Point: ${user?.point}"
                 return
             }
@@ -239,6 +249,41 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             binding.bottomSheetPersistent.run {
                 title.text = marker.title
                 description.text = marker.snippet
+                edit.run {
+//                    visibility = View.VISIBLE
+                    binding.bottomSheetPersistent.title.visibility = View.VISIBLE
+                    binding.bottomSheetPersistent.editTitle.visibility = View.GONE
+
+                    binding.bottomSheetPersistent.description.visibility = View.VISIBLE
+                    binding.bottomSheetPersistent.editDescription.visibility = View.GONE
+
+                    binding.bottomSheetPersistent.edit.text = "편집하기"
+                    setOnClickListener {
+                        me?.run {
+                            if (point < 10) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "편집하려면 포인트가 10점 이상이여야 합니다.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            else {
+                                if(text == "편집하기") {
+                                    binding.bottomSheetPersistent.title.visibility = View.GONE
+                                    binding.bottomSheetPersistent.editTitle.visibility = View.VISIBLE
+
+                                    binding.bottomSheetPersistent.description.visibility = View.GONE
+                                    binding.bottomSheetPersistent.editDescription.visibility = View.VISIBLE
+
+                                    binding.bottomSheetPersistent.edit.text = "완료"
+                                }
+                                else {
+                                    // 완료에서 누른거라 valid체크하고 업데이트 하기
+                                }
+                            }
+                        }
+                    }
+                }
             }
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             false
@@ -467,6 +512,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                     User(
                                         name = name,
                                         imageUrl = auth?.currentUser?.photoUrl.toString(),
+                                        point = 0
                                     )
                                 )
                                 finishAffinity()
