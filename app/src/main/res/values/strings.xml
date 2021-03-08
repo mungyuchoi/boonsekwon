@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">boongsekwon</string>
+    <string name="app_name">붕세권</string>
 
     <string name="bottom_sheet_behavior">com.google.android.material.bottomsheet.BottomSheetBehavior"</string>
 </resources>

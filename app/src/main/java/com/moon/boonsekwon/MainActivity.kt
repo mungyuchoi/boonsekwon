@@ -11,13 +11,10 @@ import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
-import android.text.SpannableString
-import android.text.style.UnderlineSpan
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
-import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -32,25 +29,25 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.*
 import com.kongzue.dialog.v2.InputDialog
 import com.moon.boonsekwon.const.Const
+import com.moon.boonsekwon.data.Location
 import com.moon.boonsekwon.data.User
 import com.moon.boonsekwon.databinding.ActivityMainBinding
-import com.moon.boonsekwon.databinding.BottomSheetPersistentBinding
 import com.moon.boonsekwon.register.RegisterActivity
 import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 
 import java.io.IOException
 import java.util.Locale
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private lateinit var map: GoogleMap
     private lateinit var gpsTracker: GpsTracker
@@ -111,11 +108,44 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     var userMeQuery: Query? = null
+    var locationQuery: Query? = null
 
     private fun updateUI(user: FirebaseUser?) {
         Log.i(TAG, "updateUI user:$user")
         user?.run {
             loadUserInfo()
+            loadLocationInfo()
+        }
+    }
+
+    fun loadLocationInfo() {
+        if (locationQuery == null) {
+            locationQuery =
+                FirebaseDatabase.getInstance().reference.child("Location").child("KR").apply {
+                    addValueEventListener(loadLocationListener)
+                }
+        } else {
+            locationQuery?.removeEventListener(loadLocationListener)
+            locationQuery =
+                FirebaseDatabase.getInstance().reference.child("Location").child("KR").apply {
+                    addValueEventListener(loadLocationListener)
+                }
+        }
+    }
+
+    val loadLocationListener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            for (location in snapshot.children) {
+                val info = location.getValue(Location::class.java)
+                map.addMarker(MarkerOptions().apply {
+                    position(LatLng(info!!.latitude, info!!.longitude))
+                    title(info!!.title)
+                    snippet(info!!.description)
+                })
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
         }
     }
 
@@ -228,15 +258,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        map.addMarker(MarkerOptions().apply {
-            position(LatLng(37.32487, 127.10762))
-            title("죽전역 앞 포장마차 잉어빵")
-            snippet(
-                "잉어빵2개 천원 5개 2천원이다.\n" +
-                        "시간 잘 맞춰서 가면 뜨겁고 바삭바삭한 잉어빵을 먹을 수 있다. 오뎅도 판다.\n" +
-                        "밤 11시에도 열려있었다. 아침에 여는 시간은 잘 모름."
-            )
-        })
+//        map.addMarker(MarkerOptions().apply {
+//            position(LatLng(37.32487, 127.10762))
+//            title("죽전역 앞 포장마차 잉어빵")
+//            snippet(
+//                "잉어빵2개 천원 5개 2천원이다.\n" +
+//                        "시간 잘 맞춰서 가면 뜨겁고 바삭바삭한 잉어빵을 먹을 수 있다. 오뎅도 판다.\n" +
+//                        "밤 11시에도 열려있었다. 아침에 여는 시간은 잘 모름."
+//            )
+//        })
 
         map.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
@@ -245,60 +275,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         )
 
-        map.setOnMarkerClickListener { marker ->
-            binding.bottomSheetPersistent.run {
-                title.text = marker.title
-                description.text = marker.snippet
-                edit.run {
-//                    visibility = View.VISIBLE
-                    binding.bottomSheetPersistent.title.visibility = View.VISIBLE
-                    binding.bottomSheetPersistent.editTitle.visibility = View.GONE
-
-                    binding.bottomSheetPersistent.description.visibility = View.VISIBLE
-                    binding.bottomSheetPersistent.editDescription.visibility = View.GONE
-
-                    binding.bottomSheetPersistent.edit.text = "편집하기"
-                    setOnClickListener {
-                        me?.run {
-                            if (point < 10) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "편집하려면 포인트가 10점 이상이여야 합니다.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            else {
-                                if(text == "편집하기") {
-                                    binding.bottomSheetPersistent.title.visibility = View.GONE
-                                    binding.bottomSheetPersistent.editTitle.visibility = View.VISIBLE
-
-                                    binding.bottomSheetPersistent.description.visibility = View.GONE
-                                    binding.bottomSheetPersistent.editDescription.visibility = View.VISIBLE
-
-                                    binding.bottomSheetPersistent.edit.text = "완료"
-                                }
-                                else {
-                                    // 완료에서 누른거라 valid체크하고 업데이트 하기
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-            false
-        }
+        map.setOnMarkerClickListener(this)
 
         map.setOnMapClickListener {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
-
-//        map.setOnMapLongClickListener {
-//            startActivity(Intent(this@MainActivity, RegisterActivity::class.java).apply {
-//                putExtra("latitude", it.latitude)
-//                putExtra("longitude", it.longitude)
-//            })
-//        }
     }
 
     override fun onRequestPermissionsResult(
@@ -547,5 +528,50 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         const val TAG = "BOONG"
         val RC_SIGN_IN = 9001
+    }
+
+    override fun onMarkerClick(marker: Marker?): Boolean {
+        binding.bottomSheetPersistent.run {
+            Log.i("MQ!", "marker Click: ${marker?.title}")
+            title.text = marker?.title
+            description.text = marker?.snippet
+            edit.run {
+//                    visibility = View.VISIBLE
+                binding.bottomSheetPersistent.title.visibility = View.VISIBLE
+                binding.bottomSheetPersistent.editTitle.visibility = View.GONE
+
+                binding.bottomSheetPersistent.description.visibility = View.VISIBLE
+                binding.bottomSheetPersistent.editDescription.visibility = View.GONE
+
+                binding.bottomSheetPersistent.edit.text = "편집하기"
+                setOnClickListener {
+                    me?.run {
+                        if (point < 10) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "편집하려면 포인트가 10점 이상이여야 합니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            if (text == "편집하기") {
+                                binding.bottomSheetPersistent.title.visibility = View.GONE
+                                binding.bottomSheetPersistent.editTitle.visibility =
+                                    View.VISIBLE
+
+                                binding.bottomSheetPersistent.description.visibility = View.GONE
+                                binding.bottomSheetPersistent.editDescription.visibility =
+                                    View.VISIBLE
+
+                                binding.bottomSheetPersistent.edit.text = "완료"
+                            } else {
+                                // 완료에서 누른거라 valid체크하고 업데이트 하기
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        return false
     }
 }
