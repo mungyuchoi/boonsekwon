@@ -159,14 +159,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (userMeQuery == null) {
             userMeQuery =
                 FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
                     addValueEventListener(loadUserListener)
                 }
+            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
         } else {
             userMeQuery?.removeEventListener(loadUserListener)
             userMeQuery =
                 FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
                     addValueEventListener(loadUserListener)
                 }
+            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
         }
     }
 
@@ -512,8 +516,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
-//                    Snackbar.make(main_layout, "Authentication Failed.", Snackbar.LENGTH_SHORT)
-//                        .show()
                     finish()
                 }
             }
@@ -535,41 +537,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             Log.i("MQ!", "marker Click: ${marker?.title}")
             title.text = marker?.title
             description.text = marker?.snippet
-            edit.run {
-//                    visibility = View.VISIBLE
-                binding.bottomSheetPersistent.title.visibility = View.VISIBLE
-                binding.bottomSheetPersistent.editTitle.visibility = View.GONE
-
-                binding.bottomSheetPersistent.description.visibility = View.VISIBLE
-                binding.bottomSheetPersistent.editDescription.visibility = View.GONE
-
-                binding.bottomSheetPersistent.edit.text = "편집하기"
-                setOnClickListener {
-                    me?.run {
-                        if (point < 10) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "편집하려면 포인트가 10점 이상이여야 합니다.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            if (text == "편집하기") {
-                                binding.bottomSheetPersistent.title.visibility = View.GONE
-                                binding.bottomSheetPersistent.editTitle.visibility =
-                                    View.VISIBLE
-
-                                binding.bottomSheetPersistent.description.visibility = View.GONE
-                                binding.bottomSheetPersistent.editDescription.visibility =
-                                    View.VISIBLE
-
-                                binding.bottomSheetPersistent.edit.text = "완료"
-                            } else {
-                                // 완료에서 누른거라 valid체크하고 업데이트 하기
-                            }
-                        }
-                    }
-                }
-            }
         }
         persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         return false
