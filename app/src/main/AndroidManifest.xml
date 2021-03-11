@@ -15,6 +15,10 @@
         android:theme="@style/AppTheme">
 
         <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8549606613390169~3200282715" />
+
+        <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyD8U29mmLRdYQDEX05l0rnK9-pUg7c-Jts" />
 

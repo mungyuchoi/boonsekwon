@@ -2,6 +2,7 @@ package com.moon.boonsekwon
 
 import android.Manifest
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
@@ -18,8 +20,16 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.Window
 import android.widget.Button
 import android.widget.Toast
+import com.google.android.ads.nativetemplates.TemplateView
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.formats.NativeAdOptions
+import com.google.android.gms.ads.formats.UnifiedNativeAd
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -63,6 +73,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     )
 
     private lateinit var auth: FirebaseAuth
+    private var exitDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +88,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         initView()
         initPersistentBottomSheetBehavior()
         initFirebase()
+
+        MobileAds.initialize(this)
+        binding.bottomSheetPersistent.adView.loadAd(AdRequest.Builder().build())
+        exitDialog = Dialog(this).apply {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setContentView(R.layout.exit_dialog)
+        }
+        exitDialog?.findViewById<Button>(R.id.review)?.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")))
+        }
+        exitDialog?.findViewById<Button>(R.id.exit)?.setOnClickListener {
+            finish()
+        }
+        //Test
+//        val adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
+        val adLoader = AdLoader.Builder(this, "ca-app-pub-8549606613390169/3199270954")
+            .forUnifiedNativeAd { ad: UnifiedNativeAd ->
+                exitDialog?.findViewById<TemplateView>(R.id.template)?.setNativeAd(ad)
+            }
+            .withAdListener(object : AdListener() {
+            })
+            .withNativeAdOptions(NativeAdOptions.Builder().build())
+            .build()
+        adLoader.loadAd(AdRequest.Builder().build())
+    }
+
+    override fun onBackPressed() {
+        exitDialog?.show()
     }
 
     override fun onStart() {
@@ -238,6 +277,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     )
                 }
             }
+        }
+
+        binding.bottomSheetPersistent.thumbnail.setOnClickListener {
+            Toast.makeText(this, "준비중입니다!!", Toast.LENGTH_SHORT).show()
         }
     }
 
