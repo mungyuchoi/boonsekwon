@@ -112,16 +112,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             .withNativeAdOptions(NativeAdOptions.Builder().build())
             .build()
         adLoader.loadAd(AdRequest.Builder().build())
+
+        val currentUser = auth.currentUser
+        updateUI(currentUser)
     }
 
     override fun onBackPressed() {
         exitDialog?.show()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        val currentUser = auth.currentUser
-        updateUI(currentUser)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -174,6 +171,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     val loadLocationListener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
+            Log.i("MQ!", "loadLocationListener onDataChange")
             for (location in snapshot.children) {
                 val info = location.getValue(Location::class.java)
                 map.addMarker(MarkerOptions().apply {
@@ -185,6 +183,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
 
         override fun onCancelled(error: DatabaseError) {
+            Log.i("MQ!", "loadLocationListener onCancelled: $error")
         }
     }
 
@@ -195,21 +194,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (keyMe == "" || keyMe!!.isEmpty()) {
             return
         }
-        if (userMeQuery == null) {
-            userMeQuery =
-                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
-                    addValueEventListener(loadUserListener)
-                }
-            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
-        } else {
-            userMeQuery?.removeEventListener(loadUserListener)
-            userMeQuery =
-                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
-                    addValueEventListener(loadUserListener)
-                }
-            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
+//        if (userMeQuery == null) {
+//            userMeQuery =
+//                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+//                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
+//                    addValueEventListener(loadUserListener)
+//                }
+//            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
+//        } else {
+//            userMeQuery?.removeEventListener(loadUserListener)
+//            userMeQuery =
+//                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+//                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
+//                    addValueEventListener(loadUserListener)
+//                }
+//            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
+//        }
+        FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
+            Log.i("MQ!", "addValueEventListener: $loadUserListener")
+            addValueEventListener(loadUserListener)
         }
     }
 
@@ -231,6 +234,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
 
         override fun onCancelled(error: DatabaseError) {
+            Log.i("MQ!", "loadUserListener onCancelled: $error")
         }
     }
 
