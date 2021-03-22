@@ -1,10 +1,16 @@
 package com.moon.boonsekwon.register
 
+import android.app.Dialog
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.Window
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,6 +35,8 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var gpsTracker: GpsTracker
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityRegisterBinding
+    private var locationDialog: Dialog? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,12 +96,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
             R.id.location_register -> {
-                if (validCheckInfo()) {
-                    // TODO EditText두개 넣어서 위도 경도 받고 넣기
-                    Toast.makeText(this, "기능 준비중입니다.", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "이름, 내용을 입력해주세요!!", Toast.LENGTH_SHORT).show()
-                }
+                locationDialog?.show()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -105,6 +108,45 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initView() {
         binding.registerPersistent.thumbnail.setOnClickListener {
             Toast.makeText(this, "준비중입니다!!", Toast.LENGTH_SHORT).show()
+        }
+
+        locationDialog = Dialog(this).apply {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setContentView(R.layout.location_dialog)
+        }
+        locationDialog?.findViewById<Button>(R.id.cancel)?.setOnClickListener {
+            locationDialog?.dismiss()
+        }
+        locationDialog?.findViewById<Button>(R.id.save)?.setOnClickListener {
+            val latitude = locationDialog?.findViewById<EditText>(R.id.latitude)?.text.toString()
+            val longitude = locationDialog?.findViewById<EditText>(R.id.longitude)?.text.toString()
+            val title = locationDialog?.findViewById<EditText>(R.id.title)?.text.toString()
+            val description =
+                locationDialog?.findViewById<EditText>(R.id.description)?.text.toString()
+            if (latitude.isEmpty() || longitude.isEmpty() || title.isEmpty() || description.isEmpty()) {
+                Log.i("MQ!", "invalid")
+                return@setOnClickListener
+            }
+            val pref = applicationContext.getSharedPreferences(
+                "BOONSEKWON",
+                MODE_PRIVATE
+            )
+            val registerRef =
+                FirebaseDatabase.getInstance().reference.child("Location").child("KR")
+                    .push()
+            Log.i(TAG, "registerRef:$registerRef")
+            registerRef.setValue(
+                Location(
+                    latitude = latitude.toDouble(),
+                    longitude = longitude.toDouble(),
+                    title = title,
+                    description = description,
+                    address = null,
+                    registerKey = pref.getString("key", null)
+                )
+            )
+            Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()
+            locationDialog?.dismiss()
         }
     }
 

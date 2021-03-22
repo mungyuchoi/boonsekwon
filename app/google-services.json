@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "632309481851",
+    "firebase_url": "https://boongsekwon-default-rtdb.firebaseio.com",
     "project_id": "boongsekwon",
     "storage_bucket": "boongsekwon.appspot.com"
   },

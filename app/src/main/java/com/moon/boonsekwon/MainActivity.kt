@@ -42,6 +42,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -143,9 +144,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         return super.onOptionsItemSelected(item)
     }
 
-    var userMeQuery: Query? = null
-    var locationQuery: Query? = null
-
     private fun updateUI(user: FirebaseUser?) {
         Log.i(TAG, "updateUI user:$user")
         user?.run {
@@ -155,17 +153,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     fun loadLocationInfo() {
-        if (locationQuery == null) {
-            locationQuery =
-                FirebaseDatabase.getInstance().reference.child("Location").child("KR").apply {
-                    addValueEventListener(loadLocationListener)
-                }
-        } else {
-            locationQuery?.removeEventListener(loadLocationListener)
-            locationQuery =
-                FirebaseDatabase.getInstance().reference.child("Location").child("KR").apply {
-                    addValueEventListener(loadLocationListener)
-                }
+        FirebaseDatabase.getInstance().reference.child("Location").child("KR").apply {
+            addValueEventListener(loadLocationListener)
         }
     }
 
@@ -190,26 +179,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     fun loadUserInfo() {
         val pref = application.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
         val keyMe = pref.getString("key", "")
-        Log.i("MQ!", "loadUserInfo keyMe:$keyMe, query:$userMeQuery")
         if (keyMe == "" || keyMe!!.isEmpty()) {
             return
         }
-//        if (userMeQuery == null) {
-//            userMeQuery =
-//                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-//                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
-//                    addValueEventListener(loadUserListener)
-//                }
-//            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
-//        } else {
-//            userMeQuery?.removeEventListener(loadUserListener)
-//            userMeQuery =
-//                FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
-//                    Log.i("MQ!", "addValueEventListener: $loadUserListener")
-//                    addValueEventListener(loadUserListener)
-//                }
-//            Log.i("MQ!", "loadUserInfo query:$userMeQuery")
-//        }
         FirebaseDatabase.getInstance().reference.child("users").child(keyMe).apply {
             Log.i("MQ!", "addValueEventListener: $loadUserListener")
             addValueEventListener(loadUserListener)
@@ -250,7 +222,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             if (currentUser == null) {
                 startActivityForResult(client.signInIntent, RC_SIGN_IN)
             } else {
-
+                FirebaseAnalytics.getInstance(this@MainActivity).logEvent("initFirebase", Bundle().apply {
+                    putString("currentUser", "null")
+                })
             }
         }
     }
@@ -490,11 +464,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 }
             RC_SIGN_IN -> {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+                FirebaseAnalytics.getInstance(this@MainActivity).logEvent("RC_SIGN_IN", Bundle().apply {
+                    putString("task", task.toString())
+                })
                 try {
                     // Google Sign In was successful, authenticate with Firebase
                     val account = task.getResult(ApiException::class.java)
                     firebaseAuthWithGoogle(account!!)
                 } catch (e: ApiException) {
+                    FirebaseAnalytics.getInstance(this@MainActivity).logEvent("RC_SIGN_IN", Bundle().apply {
+                        putString("sign in", "failed")
+                    })
                     Log.w(TAG, "Google sign in failed", e)
                     finish()
                 }
@@ -504,7 +484,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.id!!)
-
+        FirebaseAnalytics.getInstance(this@MainActivity).logEvent("AUTH_WITH_GOOGLE", Bundle().apply {
+            putString("acctid", acct.id!!)
+        })
         val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
         auth?.signInWithCredential(credential)!!
             .addOnCompleteListener(this) { task ->
