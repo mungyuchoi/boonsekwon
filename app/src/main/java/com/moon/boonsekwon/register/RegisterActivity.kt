@@ -1,8 +1,6 @@
 package com.moon.boonsekwon.register
 
 import android.app.Dialog
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -20,19 +18,15 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.FirebaseDatabase
-import com.kongzue.dialog.v2.InputDialog
-import com.moon.boonsekwon.GpsTracker
 import com.moon.boonsekwon.R
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
-import com.moon.boonsekwon.data.User
 import com.moon.boonsekwon.databinding.ActivityRegisterBinding
 import kotlinx.android.synthetic.main.activity_register.*
 
 class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
-    private lateinit var gpsTracker: GpsTracker
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityRegisterBinding
     private var locationDialog: Dialog? = null
@@ -53,7 +47,6 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
             it.getMapAsync(this)
         }
 
-        gpsTracker = GpsTracker(this)
         initView()
         initPersistentBottomSheetBehavior()
     }

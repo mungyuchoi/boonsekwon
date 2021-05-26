@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
+import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
@@ -58,10 +59,10 @@ import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
 import java.io.IOException
 import java.util.Locale
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
+    LocationListener {
 
     private lateinit var map: GoogleMap
-    private lateinit var gpsTracker: GpsTracker
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityMainBinding
 
@@ -76,12 +77,76 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var auth: FirebaseAuth
     private var exitDialog: Dialog? = null
 
+    private lateinit var locationManager: LocationManager
+    var location: android.location.Location? = null
+    var latitude = 0.0
+    var longitude = 0.0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager.run {
+            try {
+                val isGPSEnabled = isProviderEnabled(LocationManager.GPS_PROVIDER)
+                val isNetworkEnabled = isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                if (!isGPSEnabled && !isNetworkEnabled) {
+                } else {
+                    val hasFineLocationPermission = ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                    val hasCoarseLocationPermission = ContextCompat.checkSelfPermission(
+                        this@MainActivity, Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                    if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
+                        hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED
+                    ) {
+                    } else {
+                        Log.i(TAG, "Not granted!")
+                    }
+                    if (isNetworkEnabled) {
+                        requestLocationUpdates(
+                            LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES.toFloat(),
+                            this@MainActivity
+                        )
+                        if (locationManager != null) {
+                            location =
+                                locationManager!!.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                            if (location != null) {
+                                latitude = location!!.latitude
+                                longitude = location!!.longitude
+                            }
+                        }
+                    }
+                    if (isGPSEnabled) {
+                        if (location == null) {
+                            requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER,
+                                MIN_TIME_BW_UPDATES,
+                                MIN_DISTANCE_CHANGE_FOR_UPDATES.toFloat(),
+                                this@MainActivity
+                            )
+                            if (locationManager != null) {
+                                location =
+                                    locationManager!!.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                if (location != null) {
+                                    latitude = location!!.latitude
+                                    longitude = location!!.longitude
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).let {
             it.getMapAsync(this)
         }
@@ -222,9 +287,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             if (currentUser == null) {
                 startActivityForResult(client.signInIntent, RC_SIGN_IN)
             } else {
-                FirebaseAnalytics.getInstance(this@MainActivity).logEvent("initFirebase", Bundle().apply {
-                    putString("currentUser", "null")
-                })
+                FirebaseAnalytics.getInstance(this@MainActivity)
+                    .logEvent("initFirebase", Bundle().apply {
+                        putString("currentUser", "null")
+                    })
             }
         }
     }
@@ -236,24 +302,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             checkRunTimePermission()
         }
 
-        gpsTracker = GpsTracker(this@MainActivity)
-
         findViewById<Button>(R.id.my_location).run {
             setOnClickListener {
-                gpsTracker.run {
-                    val address = getCurrentAddress(latitude, longitude)
-                    Toast.makeText(
-                        this@MainActivity,
-                        "현재위치 \n위도 $latitude\n경도 $longitude\n address: $address",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(latitude, longitude),
-                            15f
-                        )
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(latitude, longitude),
+                        15f
                     )
-                }
+                )
             }
         }
 
@@ -295,7 +351,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         map.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
-                LatLng(gpsTracker.latitude, gpsTracker.longitude),
+                LatLng(latitude, longitude),
                 15f
             )
         )
@@ -464,18 +520,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 }
             RC_SIGN_IN -> {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-                FirebaseAnalytics.getInstance(this@MainActivity).logEvent("RC_SIGN_IN", Bundle().apply {
-                    putString("task", task.toString())
-                })
+                FirebaseAnalytics.getInstance(this@MainActivity)
+                    .logEvent("RC_SIGN_IN", Bundle().apply {
+                        putString("task", task.toString())
+                    })
                 try {
                     // Google Sign In was successful, authenticate with Firebase
                     val account = task.getResult(ApiException::class.java)
                     firebaseAuthWithGoogle(account!!)
                 } catch (e: ApiException) {
-                    FirebaseAnalytics.getInstance(this@MainActivity).logEvent("RC_SIGN_IN", Bundle().apply {
-                        putString("sign in", "failed")
-                    })
+                    FirebaseAnalytics.getInstance(this@MainActivity)
+                        .logEvent("RC_SIGN_IN", Bundle().apply {
+                            putString("sign in", "failed")
+                        })
                     Log.w(TAG, "Google sign in failed", e)
+                    Toast.makeText(
+                        this@MainActivity,
+                        "구글 계정 등록이 실패하였습니다.",
+                        Toast.LENGTH_LONG
+                    ).show()
                     finish()
                 }
             }
@@ -484,9 +547,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.id!!)
-        FirebaseAnalytics.getInstance(this@MainActivity).logEvent("AUTH_WITH_GOOGLE", Bundle().apply {
-            putString("acctid", acct.id!!)
-        })
+        FirebaseAnalytics.getInstance(this@MainActivity)
+            .logEvent("AUTH_WITH_GOOGLE", Bundle().apply {
+                putString("acctid", acct.id!!)
+            })
         val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
         auth?.signInWithCredential(credential)!!
             .addOnCompleteListener(this) { task ->
@@ -529,6 +593,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                                         point = 0
                                     )
                                 )
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "등록 완료! 앱을 다시 시작합니다.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 finishAffinity()
                                 val intent = Intent(this, MainActivity::class.java)
                                 startActivity(intent)
@@ -545,6 +614,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
+                    Toast.makeText(
+                        this@MainActivity,
+                        "firebaseAuthWithGoogle 실패!",
+                        Toast.LENGTH_LONG
+                    ).show()
                     finish()
                 }
             }
@@ -556,9 +630,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
     }
 
+    override fun onLocationChanged(location: android.location.Location) {}
+    override fun onProviderDisabled(provider: String) {}
+    override fun onProviderEnabled(provider: String) {}
+    override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+
     companion object {
         const val TAG = "BOONG"
         val RC_SIGN_IN = 9001
+        private const val MIN_DISTANCE_CHANGE_FOR_UPDATES: Long = 10
+        private const val MIN_TIME_BW_UPDATES = 1000 * 60 * 1.toLong()
     }
 
     override fun onMarkerClick(marker: Marker?): Boolean {
