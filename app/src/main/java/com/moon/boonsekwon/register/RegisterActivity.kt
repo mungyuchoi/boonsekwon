@@ -31,6 +31,8 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityRegisterBinding
     private var locationDialog: Dialog? = null
 
+    private var isEdit = false
+    private var key = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +42,11 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         supportActionBar?.run {
-            title = "등록"
+            title = if (isEdit) {
+                "편집"
+            } else {
+                "등록"
+            }
             setDisplayHomeAsUpEnabled(true)
         }
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).let {
@@ -68,21 +74,35 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                         "BOONSEKWON",
                         MODE_PRIVATE
                     )
-                    val registerRef =
-                        FirebaseDatabase.getInstance().reference.child("Location").child("KR")
-                            .push()
-                    Log.i(TAG, "registerRef:$registerRef")
-                    registerRef.setValue(
-                        Location(
-                            latitude = map.cameraPosition.target.latitude,
-                            longitude = map.cameraPosition.target.longitude,
-                            title = binding.registerPersistent.title.text.toString(),
-                            description = binding.registerPersistent.description.text.toString(),
-                            address = null,
-                            registerKey = pref.getString("key", null)
+                    if(isEdit){
+                        FirebaseDatabase.getInstance().reference.child("Location").child("KR").child(key).setValue(
+                            Location(
+                                latitude = map.cameraPosition.target.latitude,
+                                longitude = map.cameraPosition.target.longitude,
+                                title = binding.registerPersistent.title.text.toString(),
+                                description = binding.registerPersistent.description.text.toString(),
+                                address = null,
+                                registerKey = pref.getString("key", null)
+                            )
                         )
-                    )
-                    Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "수정되었습니다.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val registerRef =
+                            FirebaseDatabase.getInstance().reference.child("Location").child("KR")
+                                .push()
+                        Log.i(TAG, "registerRef:$registerRef")
+                        registerRef.setValue(
+                            Location(
+                                latitude = map.cameraPosition.target.latitude,
+                                longitude = map.cameraPosition.target.longitude,
+                                title = binding.registerPersistent.title.text.toString(),
+                                description = binding.registerPersistent.description.text.toString(),
+                                address = null,
+                                registerKey = pref.getString("key", null)
+                            )
+                        )
+                        Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()
+                    }
                     finish()
                 } else {
                     Toast.makeText(this, "이름, 내용을 입력해주세요!!", Toast.LENGTH_SHORT).show()
@@ -173,6 +193,12 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                 15f
             )
         )
+        intent.getStringExtra(Const.TITLE)?.run{
+            binding.registerPersistent.title.setText(this)
+            binding.registerPersistent.description.setText(intent.getStringExtra(Const.DESCRIPTION))
+            isEdit = true
+            key = intent.getStringExtra(Const.MAP_KEY)!!
+        }
     }
 
     companion object {

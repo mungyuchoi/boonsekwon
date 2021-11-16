@@ -81,6 +81,7 @@
         android:layout_height="80dp"
         android:layout_marginTop="50dp"
         android:layout_marginEnd="20dp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:lottie_autoPlay="true"
@@ -91,12 +92,11 @@
         android:id="@+id/edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="40dp"
         android:layout_marginEnd="46dp"
         android:text="편집하기"
         android:textColor="#1E7DB2"
         android:textSize="15dp"
-        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

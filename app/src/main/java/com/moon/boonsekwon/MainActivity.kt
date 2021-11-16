@@ -82,6 +82,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     var latitude = 0.0
     var longitude = 0.0
 
+    private var markerLatitude = 0.0
+    private var markerLongitude = 0.0
+    private val mapInfo = mutableMapOf<String, String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -203,7 +207,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     putExtra(Const.CENTER_LATITUDE, map.cameraPosition.target.latitude)
                     putExtra(Const.CENTER_LONGITUDE, map.cameraPosition.target.longitude)
                 }
-                startActivity(intent)
+                startActivityForResult(intent, CALLBACK_REGISTER)
             }
         }
         return super.onOptionsItemSelected(item)
@@ -226,8 +230,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     val loadLocationListener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             Log.i("MQ!", "loadLocationListener onDataChange")
+            mapInfo.clear()
+            map.clear()
             for (location in snapshot.children) {
                 val info = location.getValue(Location::class.java)
+                mapInfo[info!!.latitude.toString() + info!!.longitude.toString()] = location.key!!
                 map.addMarker(MarkerOptions().apply {
                     position(LatLng(info!!.latitude, info!!.longitude))
                     title(info!!.title)
@@ -260,12 +267,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             val pref = application.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
             val keyMe = pref.getString("key", "")
             if (keyMe == "" || keyMe!!.isEmpty()) {
-                return
-            }
-            if (key == keyMe) {
-                val user = snapshot.getValue(User::class.java)
-                me = user
-                supportActionBar?.title = "붕세권 Point: ${user?.point}"
                 return
             }
         }
@@ -312,9 +313,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 )
             }
         }
-
-        binding.bottomSheetPersistent.thumbnail.setOnClickListener {
-            Toast.makeText(this, "준비중입니다!!", Toast.LENGTH_SHORT).show()
+        binding.bottomSheetPersistent.edit.setOnClickListener {
+            if (markerLatitude != 0.0 && markerLongitude != 0.0) {
+                val intent = Intent(this, RegisterActivity::class.java).apply {
+                    putExtra(Const.CENTER_LATITUDE, markerLatitude)
+                    putExtra(Const.CENTER_LONGITUDE, markerLongitude)
+                    putExtra(Const.TITLE, binding.bottomSheetPersistent.title.text)
+                    putExtra(Const.DESCRIPTION, binding.bottomSheetPersistent.description.text)
+                    putExtra(Const.MAP_KEY, mapInfo[markerLatitude.toString() + markerLongitude.toString()])
+                }
+                startActivityForResult(intent, CALLBACK_REGISTER)
+            } else {
+                Toast.makeText(
+                    this@MainActivity,
+                    "잘못된 Action입니다.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
@@ -508,6 +523,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Log.i("MQ!", "onActivityResult requestCode: $requestCode")
         when (requestCode) {
             GPS_ENABLE_REQUEST_CODE ->
                 //사용자가 GPS 활성 시켰는지 검사
@@ -541,6 +557,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     ).show()
                     finish()
                 }
+            }
+            CALLBACK_REGISTER -> {
+                persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                binding.bottomSheetPersistent.title.text = ""
+                binding.bottomSheetPersistent.description.text = ""
             }
         }
     }
@@ -638,6 +659,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     companion object {
         const val TAG = "BOONG"
         val RC_SIGN_IN = 9001
+        val CALLBACK_REGISTER = 9002
         private const val MIN_DISTANCE_CHANGE_FOR_UPDATES: Long = 10
         private const val MIN_TIME_BW_UPDATES = 1000 * 60 * 1.toLong()
     }
@@ -649,6 +671,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             description.text = marker?.snippet
         }
         persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        binding.bottomSheetPersistent.adView.loadAd(AdRequest.Builder().build())
+        markerLatitude = marker?.position?.latitude ?: 0.0
+        markerLongitude = marker?.position?.longitude ?: 0.0
         return false
     }
 }

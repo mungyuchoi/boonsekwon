@@ -4,14 +4,14 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.moon.boonsekwon"
         minSdkVersion 22
         targetSdkVersion 30
-        versionCode 7
-        versionName "1.7"
+        versionCode 8
+        versionName "1.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

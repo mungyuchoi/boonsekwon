@@ -7,13 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 
 class SplashActivity : AppCompatActivity() {
 
-    private var SPLASH_TIME = 3000L //This is 1 seconds
+    private var SPLASH_TIME = 500L
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        //thread for splash screen running
-        //thread for splash screen running
         val logoTimer: Thread = object : Thread() {
             override fun run() {
                 try {
