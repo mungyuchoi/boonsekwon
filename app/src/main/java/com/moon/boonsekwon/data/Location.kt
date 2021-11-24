@@ -9,5 +9,6 @@ data class Location(
     var title: String = "",
     var description: String? = "",
     var address: String? = "",
-    var registerKey: String? = ""
+    var registerKey: String? = "",
+    var typeImageId : Int = 0
 )

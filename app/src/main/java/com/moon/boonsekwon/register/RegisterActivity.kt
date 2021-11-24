@@ -82,7 +82,8 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                                 title = binding.registerPersistent.title.text.toString(),
                                 description = binding.registerPersistent.description.text.toString(),
                                 address = null,
-                                registerKey = pref.getString("key", null)
+                                registerKey = pref.getString("key", null),
+                                typeImageId = 0
                             )
                         )
                         Toast.makeText(this, "수정되었습니다.", Toast.LENGTH_SHORT).show()
@@ -98,7 +99,8 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                                 title = binding.registerPersistent.title.text.toString(),
                                 description = binding.registerPersistent.description.text.toString(),
                                 address = null,
-                                registerKey = pref.getString("key", null)
+                                registerKey = pref.getString("key", null),
+                                typeImageId = 0
                             )
                         )
                         Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()

@@ -39,6 +39,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -229,9 +230,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     val loadLocationListener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            Log.i("MQ!", "loadLocationListener onDataChange")
+            Log.i(
+                "MQ!",
+                "loadLocationListener onDataChange latitude:$latitude, longitude:$longitude"
+            )
             mapInfo.clear()
             map.clear()
+            if (latitude != 0.0 && longitude != 0.0) {
+                map.addMarker(MarkerOptions().apply {
+                    position(LatLng(latitude, longitude))
+                    title("내 위치")
+                    icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                })
+            }
+
             for (location in snapshot.children) {
                 val info = location.getValue(Location::class.java)
                 mapInfo[info!!.latitude.toString() + info!!.longitude.toString()] = location.key!!
@@ -320,7 +332,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     putExtra(Const.CENTER_LONGITUDE, markerLongitude)
                     putExtra(Const.TITLE, binding.bottomSheetPersistent.title.text)
                     putExtra(Const.DESCRIPTION, binding.bottomSheetPersistent.description.text)
-                    putExtra(Const.MAP_KEY, mapInfo[markerLatitude.toString() + markerLongitude.toString()])
+                    putExtra(
+                        Const.MAP_KEY,
+                        mapInfo[markerLatitude.toString() + markerLongitude.toString()]
+                    )
                 }
                 startActivityForResult(intent, CALLBACK_REGISTER)
             } else {
@@ -665,6 +680,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     override fun onMarkerClick(marker: Marker?): Boolean {
+        marker?.run {
+            if (marker.position.latitude == latitude && marker.position.longitude == longitude) {
+                return false
+            }
+        }
         binding.bottomSheetPersistent.run {
             Log.i("MQ!", "marker Click: ${marker?.title}")
             title.text = marker?.title
