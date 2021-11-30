@@ -7,5 +7,6 @@ class Const {
         val TITLE="title"
         val DESCRIPTION="description"
         val MAP_KEY="map_key"
+        val TYPE="type"
     }
 }

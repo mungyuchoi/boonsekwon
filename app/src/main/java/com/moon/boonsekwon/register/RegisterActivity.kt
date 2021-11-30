@@ -1,6 +1,7 @@
 package com.moon.boonsekwon.register
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -10,6 +11,7 @@ import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -18,6 +20,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.FirebaseDatabase
+import com.kongzue.dialog.v2.SelectDialog
 import com.moon.boonsekwon.R
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
@@ -74,18 +77,19 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                         "BOONSEKWON",
                         MODE_PRIVATE
                     )
-                    if(isEdit){
-                        FirebaseDatabase.getInstance().reference.child("Location").child("KR").child(key).setValue(
-                            Location(
-                                latitude = map.cameraPosition.target.latitude,
-                                longitude = map.cameraPosition.target.longitude,
-                                title = binding.registerPersistent.title.text.toString(),
-                                description = binding.registerPersistent.description.text.toString(),
-                                address = null,
-                                registerKey = pref.getString("key", null),
-                                typeImageId = 0
+                    if (isEdit) {
+                        FirebaseDatabase.getInstance().reference.child("Location").child("KR")
+                            .child(key).setValue(
+                                Location(
+                                    latitude = map.cameraPosition.target.latitude,
+                                    longitude = map.cameraPosition.target.longitude,
+                                    title = binding.registerPersistent.title.text.toString(),
+                                    description = binding.registerPersistent.description.text.toString(),
+                                    address = null,
+                                    registerKey = pref.getString("key", null),
+                                    typeImageId = type
+                                )
                             )
-                        )
                         Toast.makeText(this, "수정되었습니다.", Toast.LENGTH_SHORT).show()
                     } else {
                         val registerRef =
@@ -100,7 +104,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                                 description = binding.registerPersistent.description.text.toString(),
                                 address = null,
                                 registerKey = pref.getString("key", null),
-                                typeImageId = 0
+                                typeImageId = type
                             )
                         )
                         Toast.makeText(this, "추가되었습니다.", Toast.LENGTH_SHORT).show()
@@ -120,9 +124,29 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun validCheckInfo(): Boolean =
         binding.registerPersistent.title.text.isNotEmpty() && binding.registerPersistent.description.text.isNotEmpty()
 
+    var type = 0
     private fun initView() {
         binding.registerPersistent.thumbnail.setOnClickListener {
-            Toast.makeText(this, "준비중입니다!!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "간식을 선택해주세요.", Toast.LENGTH_SHORT).show()
+            val typeWords = arrayOf("붕어빵", "호떡", "풀빵", "계란빵", "GS25")
+            AlertDialog.Builder(this).setTitle("간식을 선택해주세요")
+                .setSingleChoiceItems(typeWords, -1, object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface?, which: Int) {
+                        Toast.makeText(
+                            this@RegisterActivity,
+                            "${typeWords[which]}를 선택하였습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        type = which
+                    }
+                }).setPositiveButton("선택", object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface?, which: Int) {
+                        updateThumbnail(type)
+                        dialog?.dismiss()
+                    }
+                }).setNegativeButton(
+                    "취소"
+                ) { dialog, which -> dialog?.dismiss() }.show()
         }
 
         locationDialog = Dialog(this).apply {
@@ -165,6 +189,20 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun updateThumbnail(position: Int) {
+        if (position < 0 || position > 4) {
+            return
+        }
+        var thumbnailResourceIds = arrayOf(
+            R.drawable.marker_a,
+            R.drawable.marker_b,
+            R.drawable.marker_c,
+            R.drawable.marker_d,
+            R.drawable.marker_e
+        )
+        binding.registerPersistent.thumbnail.setImageResource(thumbnailResourceIds[position])
+    }
+
     private fun initPersistentBottomSheetBehavior() {
         persistentBottomSheetBehavior = BottomSheetBehavior.from(register_persistent)
         persistentBottomSheetBehavior.run {
@@ -195,11 +233,12 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                 15f
             )
         )
-        intent.getStringExtra(Const.TITLE)?.run{
+        intent.getStringExtra(Const.TITLE)?.run {
             binding.registerPersistent.title.setText(this)
             binding.registerPersistent.description.setText(intent.getStringExtra(Const.DESCRIPTION))
             isEdit = true
             key = intent.getStringExtra(Const.MAP_KEY)!!
+            updateThumbnail(intent.getIntExtra(Const.TYPE, 0))
         }
     }
 

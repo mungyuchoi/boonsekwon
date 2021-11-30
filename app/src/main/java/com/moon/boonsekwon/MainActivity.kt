@@ -39,10 +39,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
@@ -86,6 +83,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private var markerLatitude = 0.0
     private var markerLongitude = 0.0
     private val mapInfo = mutableMapOf<String, String>()
+    private val typeInfo = mutableMapOf<String, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -235,6 +233,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 "loadLocationListener onDataChange latitude:$latitude, longitude:$longitude"
             )
             mapInfo.clear()
+            typeInfo.clear()
             map.clear()
             if (latitude != 0.0 && longitude != 0.0) {
                 map.addMarker(MarkerOptions().apply {
@@ -246,11 +245,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
             for (location in snapshot.children) {
                 val info = location.getValue(Location::class.java)
+                val thumbnailResourceIds = arrayOf(
+                    R.drawable.marker_a,
+                    R.drawable.marker_b,
+                    R.drawable.marker_c,
+                    R.drawable.marker_d,
+                    R.drawable.marker_e
+                )
                 mapInfo[info!!.latitude.toString() + info!!.longitude.toString()] = location.key!!
+                typeInfo[info!!.latitude.toString() + info!!.longitude.toString()] = info.typeImageId
                 map.addMarker(MarkerOptions().apply {
                     position(LatLng(info!!.latitude, info!!.longitude))
                     title(info!!.title)
                     snippet(info!!.description)
+                    icon(BitmapDescriptorFactory.fromResource(thumbnailResourceIds[info!!.typeImageId]))
                 })
             }
         }
@@ -336,6 +344,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         Const.MAP_KEY,
                         mapInfo[markerLatitude.toString() + markerLongitude.toString()]
                     )
+                    putExtra(Const.TYPE, typeInfo[markerLatitude.toString() + markerLongitude.toString()])
                 }
                 startActivityForResult(intent, CALLBACK_REGISTER)
             } else {
