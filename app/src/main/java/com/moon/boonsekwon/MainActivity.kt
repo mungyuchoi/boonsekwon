@@ -202,11 +202,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     TAG,
                     "center position latitude:${map.cameraPosition.target.latitude}, longitude:${map.cameraPosition.target.latitude}"
                 )
-                val intent = Intent(this, RegisterActivity::class.java).apply {
-                    putExtra(Const.CENTER_LATITUDE, map.cameraPosition.target.latitude)
-                    putExtra(Const.CENTER_LONGITUDE, map.cameraPosition.target.longitude)
+                if (me != null && me!!.permission >= 0) {
+                    val intent = Intent(this, RegisterActivity::class.java).apply {
+                        putExtra(Const.CENTER_LATITUDE, map.cameraPosition.target.latitude)
+                        putExtra(Const.CENTER_LONGITUDE, map.cameraPosition.target.longitude)
+                    }
+                    startActivityForResult(intent, CALLBACK_REGISTER)
+                } else {
+                    Toast.makeText(this@MainActivity, "권한이 없습니다.", Toast.LENGTH_SHORT).show()
                 }
-                startActivityForResult(intent, CALLBACK_REGISTER)
+
             }
         }
         return super.onOptionsItemSelected(item)
@@ -289,6 +294,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             if (keyMe == "" || keyMe!!.isEmpty()) {
                 return
             }
+            me = snapshot.getValue(User::class.java) as User
         }
 
         override fun onCancelled(error: DatabaseError) {
@@ -333,24 +339,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 )
             }
         }
+
         binding.bottomSheetPersistent.edit.setOnClickListener {
-            if (markerLatitude != 0.0 && markerLongitude != 0.0) {
-                val intent = Intent(this, RegisterActivity::class.java).apply {
-                    putExtra(Const.CENTER_LATITUDE, markerLatitude)
-                    putExtra(Const.CENTER_LONGITUDE, markerLongitude)
-                    putExtra(Const.TITLE, binding.bottomSheetPersistent.title.text)
-                    putExtra(Const.DESCRIPTION, binding.bottomSheetPersistent.description.text)
-                    putExtra(
-                        Const.MAP_KEY,
-                        mapInfo[markerLatitude.toString() + markerLongitude.toString()]
-                    )
-                    putExtra(Const.TYPE, typeInfo[markerLatitude.toString() + markerLongitude.toString()])
+            if (me != null && me!!.permission >= 0) {
+                if (markerLatitude != 0.0 && markerLongitude != 0.0) {
+                    val intent = Intent(this, RegisterActivity::class.java).apply {
+                        putExtra(Const.CENTER_LATITUDE, markerLatitude)
+                        putExtra(Const.CENTER_LONGITUDE, markerLongitude)
+                        putExtra(Const.TITLE, binding.bottomSheetPersistent.title.text)
+                        putExtra(Const.DESCRIPTION, binding.bottomSheetPersistent.description.text)
+                        putExtra(
+                            Const.MAP_KEY,
+                            mapInfo[markerLatitude.toString() + markerLongitude.toString()]
+                        )
+                        putExtra(Const.TYPE, typeInfo[markerLatitude.toString() + markerLongitude.toString()])
+                    }
+                    startActivityForResult(intent, CALLBACK_REGISTER)
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "권한이 없습니다.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                startActivityForResult(intent, CALLBACK_REGISTER)
             } else {
                 Toast.makeText(
                     this@MainActivity,
-                    "잘못된 Action입니다.",
+                    "권한이 없습니다.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -377,26 +392,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-//        map.addMarker(MarkerOptions().apply {
-//            position(LatLng(37.32487, 127.10762))
-//            title("죽전역 앞 포장마차 잉어빵")
-//            snippet(
-//                "잉어빵2개 천원 5개 2천원이다.\n" +
-//                        "시간 잘 맞춰서 가면 뜨겁고 바삭바삭한 잉어빵을 먹을 수 있다. 오뎅도 판다.\n" +
-//                        "밤 11시에도 열려있었다. 아침에 여는 시간은 잘 모름."
-//            )
-//        })
-
         map.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(latitude, longitude),
                 15f
             )
         )
-
         map.setOnMarkerClickListener(this)
-
         map.setOnMapClickListener {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
