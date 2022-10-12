@@ -398,6 +398,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 15f
             )
         )
+        locationManager.removeUpdates(this)
         map.setOnMarkerClickListener(this)
         map.setOnMapClickListener {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED

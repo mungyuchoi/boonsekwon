@@ -1,7 +1,10 @@
 package com.moon.boonsekwon.register
 
 import android.app.Dialog
+import android.content.Context
 import android.content.DialogInterface
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -20,7 +23,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.FirebaseDatabase
-import com.kongzue.dialog.v2.SelectDialog
 import com.moon.boonsekwon.R
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
@@ -33,6 +35,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityRegisterBinding
     private var locationDialog: Dialog? = null
+    private lateinit var locationManager: LocationManager
 
     private var isEdit = false
     private var key = ""
@@ -42,7 +45,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         supportActionBar?.run {
             title = if (isEdit) {
@@ -233,6 +236,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
                 15f
             )
         )
+        locationManager.removeUpdates { }
         intent.getStringExtra(Const.TITLE)?.run {
             binding.registerPersistent.title.setText(this)
             binding.registerPersistent.description.setText(intent.getStringExtra(Const.DESCRIPTION))
