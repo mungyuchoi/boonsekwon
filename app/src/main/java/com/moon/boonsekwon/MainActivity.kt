@@ -392,13 +392,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        map.animateCamera(
+        map.moveCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(latitude, longitude),
                 15f
             )
         )
-        locationManager.removeUpdates(this)
         map.setOnMarkerClickListener(this)
         map.setOnMapClickListener {
             persistentBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED

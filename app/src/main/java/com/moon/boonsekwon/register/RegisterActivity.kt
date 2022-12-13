@@ -1,10 +1,7 @@
 package com.moon.boonsekwon.register
 
 import android.app.Dialog
-import android.content.Context
 import android.content.DialogInterface
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -35,7 +32,6 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var persistentBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var binding: ActivityRegisterBinding
     private var locationDialog: Dialog? = null
-    private lateinit var locationManager: LocationManager
 
     private var isEdit = false
     private var key = ""
@@ -45,7 +41,6 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         supportActionBar?.run {
             title = if (isEdit) {
@@ -230,13 +225,12 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
         val latitude = intent.getDoubleExtra(Const.CENTER_LATITUDE, 0.0)
         val longitude = intent.getDoubleExtra(Const.CENTER_LONGITUDE, 0.0)
         Log.i(TAG, "onMapReady center latitude:$latitude, longitude:$longitude")
-        map.animateCamera(
+        map.moveCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(latitude, longitude),
                 15f
             )
         )
-        locationManager.removeUpdates { }
         intent.getStringExtra(Const.TITLE)?.run {
             binding.registerPersistent.title.setText(this)
             binding.registerPersistent.description.setText(intent.getStringExtra(Const.DESCRIPTION))
