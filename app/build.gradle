@@ -10,8 +10,8 @@ android {
         applicationId "com.moon.boonsekwon"
         minSdkVersion 22
         targetSdkVersion 31
-        versionCode 13
-        versionName "1.13"
+        versionCode 14
+        versionName "1.14"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,6 +57,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:19.7.0'
     implementation project(':nativetemplates')
 
+    implementation 'androidx.work:work-runtime-ktx:2.7.0-beta01'
     implementation 'com.kongzue.dialog:dialog:2.4.8'
 
     testImplementation 'junit:junit:4.12'
