@@ -71,6 +71,10 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             R.id.name_register -> {
                 if (validCheckInfo()) {
+                    if (!validCheckMap()) {
+                        Toast.makeText(this, "한국이외의 지점은 등록 할 수 없습니다..", Toast.LENGTH_SHORT).show()
+                        return true
+                    }
                     val pref = applicationContext.getSharedPreferences(
                         "BOONSEKWON",
                         MODE_PRIVATE
@@ -117,6 +121,15 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun validCheckMap(): Boolean {
+        val latitude = map.cameraPosition.target.latitude
+        val longitude = map.cameraPosition.target.longitude
+        if (latitude > 33 && latitude < 41 && longitude > 124 && longitude < 132) {
+            return true
+        }
+        return false
     }
 
     private fun validCheckInfo(): Boolean =

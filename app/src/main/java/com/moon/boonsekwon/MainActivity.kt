@@ -14,6 +14,7 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Html
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
@@ -262,7 +263,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     R.drawable.marker_e
                 )
                 mapInfo[info!!.latitude.toString() + info!!.longitude.toString()] = location.key!!
-                typeInfo[info!!.latitude.toString() + info!!.longitude.toString()] = info.typeImageId
+                typeInfo[info!!.latitude.toString() + info!!.longitude.toString()] =
+                    info.typeImageId
                 map.addMarker(MarkerOptions().apply {
                     position(LatLng(info!!.latitude, info!!.longitude))
                     title(info!!.title)
@@ -331,17 +333,39 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
         remoteConfig.setConfigSettingsAsync(configSettings)
         remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
-        remoteConfig.fetchAndActivate().addOnCompleteListener {task->
-            if(task.isSuccessful) {
+        remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
                 var appVersion = remoteConfig.getString("app_version")
-                Log.i(TAG,"remoteConfig fetch succeed version:$appVersion")
+                val pref =
+                    applicationContext.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
+                Log.i(
+                    TAG,
+                    "remoteConfig fetch succeed version:$appVersion, appversion:${
+                        Utils.getVersionInfo(this)} pref app_version:${pref.getInt("app_version", 0)}",
+                )
+                if (appVersion == Utils.getVersionInfo(this) && pref.getInt("app_version", 0) == 0) {
+                    showContentsDialog(appVersion, remoteConfig.getString("notice"))
+                }
             } else {
-                Log.i(TAG,"remoteConfig fetch failed")
+                Log.i(TAG, "remoteConfig fetch failed")
             }
         }
     }
 
+    private fun showContentsDialog(version: String, contents: String) {
+        AlertDialog.Builder(this).setTitle("붕세권 업데이트 안내 $version").setMessage(Html.fromHtml(contents))
+            .setPositiveButton("확인") { dialog, _ ->
+                dialog.dismiss()
+                val pref =
+                    applicationContext.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
+                val editor = pref.edit()
+                editor.putInt("app_version", 1)
+                editor.commit()
+            }.create().show()
+    }
+
     private fun initView() {
+
         if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting()
         } else {
@@ -371,7 +395,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             Const.MAP_KEY,
                             mapInfo[markerLatitude.toString() + markerLongitude.toString()]
                         )
-                        putExtra(Const.TYPE, typeInfo[markerLatitude.toString() + markerLongitude.toString()])
+                        putExtra(
+                            Const.TYPE,
+                            typeInfo[markerLatitude.toString() + markerLongitude.toString()]
+                        )
                     }
                     startActivityForResult(intent, CALLBACK_REGISTER)
                 } else {
@@ -724,6 +751,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         binding.bottomSheetPersistent.adView.loadAd(AdRequest.Builder().build())
         markerLatitude = marker?.position?.latitude ?: 0.0
         markerLongitude = marker?.position?.longitude ?: 0.0
+        FirebaseAnalytics.getInstance(this@MainActivity)
+            .logEvent("onMarkerClick", Bundle().apply {
+                putString(
+                    "Type",
+                    typeInfo[markerLatitude.toString() + markerLongitude.toString()].toString()
+                )
+            })
         return false
     }
 }
