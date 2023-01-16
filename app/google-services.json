@@ -23,11 +23,19 @@
           }
         },
         {
-          "client_id": "63230AIzaSyBfXyzNiBGcbP2Pzc8aALFnNi9rZcBG_Kg481851-b82fknga8m807v9jtnn10sv33v8mleml.apps.googleusercontent.com",
+          "client_id": "632309481851-b82fknga8m807v9jtnn10sv33v8mleml.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.moon.boonsekwon",
             "certificate_hash": "3b82378cb7d2fc7c8c7b8fa727c8ffee9eeb3141"
+          }
+        },
+        {
+          "client_id": "632309481851-e6jbmhk8qbn00hh4d4s2han8vdfkpnr8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.moon.boonsekwon",
+            "certificate_hash": "9e030f5023c2cbd12350900b6018e75fc4f5a455"
           }
         },
         {
@@ -57,7 +65,8 @@
             }
           ]
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-8549606613390169~3200282715"
     }
   ],
   "configuration_version": "1"

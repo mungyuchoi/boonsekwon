@@ -1,18 +1,16 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.google.android.ads.nativetemplates"
-4    android:versionCode="1"
-5    android:versionName="1.0" >
-6
-7    <uses-sdk
-8        android:minSdkVersion="16"
-8-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml
-9        android:targetSdkVersion="28" />
-9-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml
-10
-11    <application android:supportsRtl="true" >
-11-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml:3:3-5:17
-11-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml:3:16-42
-12    </application>
-13
-14</manifest>
+3    package="com.google.android.ads.nativetemplates" >
+4
+5    <uses-sdk
+6        android:minSdkVersion="16"
+6-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml
+7        android:targetSdkVersion="28" />
+7-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml
+8
+9    <application android:supportsRtl="true" >
+9-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml:3:3-5:17
+9-->D:\develop\boonsekwon\nativetemplates\src\main\AndroidManifest.xml:3:16-42
+10    </application>
+11
+12</manifest>

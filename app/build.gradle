@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.moon.boonsekwon"
-        minSdkVersion 22
+        minSdkVersion 24
         targetSdkVersion 31
         versionCode 14
         versionName "1.14"
@@ -23,8 +23,13 @@ android {
         }
     }
 
-    viewBinding {
-        enabled = true
+    buildFeatures {
+        viewBinding = true
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
     }
 }
 
@@ -41,7 +46,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
 
     // firebase
-    implementation platform('com.google.firebase:firebase-bom:26.6.0')
+    implementation platform('com.google.firebase:firebase-bom:31.1.1')
     implementation 'com.google.firebase:firebase-core:16.0.8'
     implementation 'com.google.firebase:firebase-auth:17.0.0'
     implementation 'com.google.firebase:firebase-database:18.0.1'

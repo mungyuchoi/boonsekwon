@@ -46,6 +46,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.*
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import com.kongzue.dialog.v2.InputDialog
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
@@ -318,6 +322,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     .logEvent("initFirebase", Bundle().apply {
                         putString("currentUser", "null")
                     })
+            }
+        }
+
+        val remoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
+        val configSettings = remoteConfigSettings {
+            minimumFetchIntervalInSeconds = 3600
+        }
+        remoteConfig.setConfigSettingsAsync(configSettings)
+        remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
+        remoteConfig.fetchAndActivate().addOnCompleteListener {task->
+            if(task.isSuccessful) {
+                var appVersion = remoteConfig.getString("app_version")
+                Log.i(TAG,"remoteConfig fetch succeed version:$appVersion")
+            } else {
+                Log.i(TAG,"remoteConfig fetch failed")
             }
         }
     }
