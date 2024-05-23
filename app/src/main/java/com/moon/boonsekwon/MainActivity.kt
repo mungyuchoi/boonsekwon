@@ -78,7 +78,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     )
 
     private lateinit var auth: FirebaseAuth
-    private var exitDialog: Dialog? = null
 
     private lateinit var locationManager: LocationManager
     var location: android.location.Location? = null
@@ -165,34 +164,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         MobileAds.initialize(this)
         binding.bottomSheetPersistent.adView.loadAd(AdRequest.Builder().build())
-        exitDialog = Dialog(this).apply {
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
-            setContentView(R.layout.exit_dialog)
-        }
-        exitDialog?.findViewById<Button>(R.id.review)?.setOnClickListener {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")))
-        }
-        exitDialog?.findViewById<Button>(R.id.exit)?.setOnClickListener {
-            finish()
-        }
-        //Test
-//        val adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
-        val adLoader = AdLoader.Builder(this, "ca-app-pub-8549606613390169/3199270954")
-            .forUnifiedNativeAd { ad: UnifiedNativeAd ->
-                exitDialog?.findViewById<TemplateView>(R.id.template)?.setNativeAd(ad)
-            }
-            .withAdListener(object : AdListener() {
-            })
-            .withNativeAdOptions(NativeAdOptions.Builder().build())
-            .build()
-        adLoader.loadAd(AdRequest.Builder().build())
 
         val currentUser = auth.currentUser
         updateUI(currentUser)
-    }
-
-    override fun onBackPressed() {
-        exitDialog?.show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
