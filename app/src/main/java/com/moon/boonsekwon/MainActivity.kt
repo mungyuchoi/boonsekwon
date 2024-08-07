@@ -2,7 +2,6 @@ package com.moon.boonsekwon
 
 import android.Manifest
 import android.app.AlertDialog
-import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -11,7 +10,6 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Html
@@ -22,16 +20,11 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.Window
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
-import com.google.android.ads.nativetemplates.TemplateView
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.formats.NativeAdOptions
-import com.google.android.gms.ads.formats.UnifiedNativeAd
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -51,7 +44,6 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import com.kongzue.dialog.v2.InputDialog
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
 import com.moon.boonsekwon.data.User
@@ -628,54 +620,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         applicationContext.getSharedPreferences("BOONSEKWON", Context.MODE_PRIVATE)
                     Log.d(TAG, "name: " + pref.getString("name", "unknown"))
                     if (pref.getString("name", "unknown") == "unknown") {
-                        InputDialog.build(
-                            this@MainActivity,
-                            "별명을 입력해주세요.", "사용할 별명을 입력해주세요", "완료",
-                            { dialog, inputText ->
-                                dialog.dismiss()
-                                val pref = applicationContext.getSharedPreferences(
-                                    "BOONSEKWON",
-                                    MODE_PRIVATE
-                                )
-                                val editor = pref.edit()
-                                editor.putString("name", auth?.currentUser?.displayName)
-                                editor.putString(
-                                    "image",
-                                    auth?.currentUser?.photoUrl.toString()
-                                )
-                                var usersRef =
-                                    FirebaseDatabase.getInstance().reference.child("users")
-                                        .push()
-                                editor.putString("key", usersRef.key)
-                                editor.commit()
-                                var name = inputText
-                                if (name == null || name.isEmpty()) {
-                                    name = auth?.currentUser?.displayName
-                                }
-                                Log.d(TAG, "name: $name")
-                                usersRef.setValue(
-                                    User(
-                                        name = name,
-                                        imageUrl = auth?.currentUser?.photoUrl.toString(),
-                                        point = 0
-                                    )
-                                )
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "등록 완료! 앱을 다시 시작합니다.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                finishAffinity()
-                                val intent = Intent(this, MainActivity::class.java)
-                                startActivity(intent)
-                            }, "취소", { dialog, _ ->
-                                dialog.dismiss()
-                                finish()
-                            }).apply {
-                            setDialogStyle(1)
-                            setDefaultInputHint(auth?.currentUser?.displayName)
-                            showDialog()
-                        }
+                        showInputDialog()
                     }
 
                 } else {
@@ -689,6 +634,54 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     finish()
                 }
             }
+    }
+
+    private fun showInputDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("별명을 입력해주세요.")
+        builder.setMessage("사용할 별명을 입력해주세요")
+
+        val input = EditText(this)
+        input.hint = auth.currentUser?.displayName
+        builder.setView(input)
+
+        builder.setPositiveButton("완료") { dialog, _ ->
+            val inputText = input.text.toString().trim()
+            val pref = applicationContext.getSharedPreferences("BOONSEKWON", MODE_PRIVATE)
+            val editor = pref.edit()
+            editor.putString("name", auth.currentUser?.displayName)
+            editor.putString("image", auth.currentUser?.photoUrl.toString())
+
+            val usersRef = FirebaseDatabase.getInstance().reference.child("users").push()
+            editor.putString("key", usersRef.key)
+            editor.commit()
+
+            var name = inputText
+            if (name.isEmpty()) {
+                name = auth.currentUser?.displayName ?: "Unknown"
+            }
+
+            usersRef.setValue(
+                User(
+                    name = name,
+                    imageUrl = auth.currentUser?.photoUrl.toString(),
+                    point = 0
+                )
+            )
+
+            Toast.makeText(this, "등록 완료! 앱을 다시 시작합니다.", Toast.LENGTH_LONG).show()
+            dialog.dismiss()
+            finishAffinity()
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+
+        builder.setNegativeButton("취소") { dialog, _ ->
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.show()
     }
 
     fun checkLocationServicesStatus(): Boolean {
