@@ -49,7 +49,7 @@ import com.moon.boonsekwon.data.Location
 import com.moon.boonsekwon.data.User
 import com.moon.boonsekwon.databinding.ActivityMainBinding
 import com.moon.boonsekwon.register.RegisterActivity
-import kotlinx.android.synthetic.main.bottom_sheet_persistent.*
+// synthetic 제거: viewBinding 사용
 
 import java.io.IOException
 import java.util.Locale
@@ -385,7 +385,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun initPersistentBottomSheetBehavior() {
-        persistentBottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet_persistent)
+        persistentBottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheetPersistent.root)
         persistentBottomSheetBehavior.run {
             setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                 override fun onStateChanged(p0: View, state: Int) {

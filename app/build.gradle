@@ -1,19 +1,26 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.google.gms.google-services'
+// android-extensions는 더 이상 지원되지 않음. ViewBinding/Kotlin Parcelize로 대체
 
 android {
-    compileSdkVersion 34
+    namespace "com.moon.boonsekwon"
+
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId "com.moon.boonsekwon"
         minSdkVersion 24
-        targetSdkVersion 34
-        versionCode 18
-        versionName "1.18"
+        targetSdkVersion 35
+        versionCode 19
+        versionName "1.19"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 
     buildTypes {
@@ -30,6 +37,9 @@ android {
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
@@ -69,3 +79,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
 }
+
+// google-services 플러그인은 파일의 마지막에 적용해야 리소스가 올바르게 생성됩니다.
+apply plugin: 'com.google.gms.google-services'

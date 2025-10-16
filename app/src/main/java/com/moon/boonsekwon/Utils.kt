@@ -6,8 +6,8 @@ import android.content.pm.PackageManager
 import android.util.Log
 
 object Utils {
-    fun getVersionInfo(context: Context?): String? {
-        var version = "1.14"
+    fun getVersionInfo(context: Context?): String {
+        var version: String = "1.14"
         val packageInfo: PackageInfo
         if (context == null) {
             return version
@@ -16,7 +16,7 @@ object Utils {
             packageInfo = context.applicationContext
                 .packageManager
                 .getPackageInfo(context.applicationContext.packageName, 0)
-            version = packageInfo.versionName
+            version = packageInfo.versionName ?: version
         } catch (e: PackageManager.NameNotFoundException) {
             Log.e("Utils", "getVersionInfo :" + e.message)
         }

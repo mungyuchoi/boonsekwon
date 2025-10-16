@@ -24,7 +24,7 @@ import com.moon.boonsekwon.R
 import com.moon.boonsekwon.const.Const
 import com.moon.boonsekwon.data.Location
 import com.moon.boonsekwon.databinding.ActivityRegisterBinding
-import kotlinx.android.synthetic.main.activity_register.*
+// synthetic 제거: viewBinding 사용
 
 class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -215,7 +215,7 @@ class RegisterActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun initPersistentBottomSheetBehavior() {
-        persistentBottomSheetBehavior = BottomSheetBehavior.from(register_persistent)
+        persistentBottomSheetBehavior = BottomSheetBehavior.from(binding.registerPersistent.root)
         persistentBottomSheetBehavior.run {
             state = BottomSheetBehavior.STATE_EXPANDED
             setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
